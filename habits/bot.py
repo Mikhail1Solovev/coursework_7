@@ -1,11 +1,14 @@
 import telebot
+import os
+import dotenv
 
-bot = telebot.TeleBot('6947279879:AAESKXowF4zovjLuuTeGh6ipDehEJAouu5I')
+# Load environment variables from .env file
+dotenv.load_dotenv()
 
+# Initialize bot with token from environment variables
+bot = telebot.TeleBot(os.getenv('TELEGRAM_BOT_TOKEN'))
 
 @bot.message_handler(content_types=['text'])
-
-
 def handle_text(message):
     if message.text.lower() == "привет":
         bot.send_message(message.chat.id, "Привет, чем я могу тебе помочь?")
@@ -14,10 +17,6 @@ def handle_text(message):
     else:
         bot.send_message(message.chat.id, "Я тебя не понимаю. Напиши /help.")
 
-
-# Уберите декоратор @bot.message_handler, который находится внутри другого декоратора
 @bot.message_handler(content_types=['document', 'audio'])
-
-
 def handle_other_types(message):
     pass

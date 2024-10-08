@@ -1,9 +1,8 @@
-
 import dotenv
 import os
 
 # Load environment variables from .env file
-dotenv.load_dotenv(os.path.join(BASE_DIR, '.env'))
+dotenv.load_dotenv(os.path.join(os.path.dirname(__file__), '.env'))
 """
 Django settings for habit_tracker project.
 
@@ -26,12 +25,12 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.1/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = 'django-insecure-^=o1mufodo6oml11m1lgz2a_cazn$9nizsa20j22*1iu*7r3dz'
+SECRET_KEY = os.getenv('SECRET_KEY', 'django-insecure-^=o1mufodo6oml11m1lgz2a_cazn$9nizsa20j22*1iu*7r3dz')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = os.getenv('DEBUG', 'False') == 'True'
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = os.getenv('ALLOWED_HOSTS', '').split(',')
 
 
 # Application definition
@@ -81,8 +80,12 @@ WSGI_APPLICATION = 'habit_tracker.wsgi.application'
 
 DATABASES = {
     'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
+        'ENGINE': 'django.db.backends.postgresql',
+        'NAME': os.getenv('DB_NAME', 'your_db_name'),
+        'USER': os.getenv('DB_USER', 'your_db_user'),
+        'PASSWORD': os.getenv('DB_PASSWORD', 'your_db_password'),
+        'HOST': os.getenv('DB_HOST', 'localhost'),
+        'PORT': os.getenv('DB_PORT', '5432'),
     }
 }
 
@@ -143,6 +146,7 @@ CORS_ALLOW_ALL_ORIGINS = True
 # Celery Beat Schedule for periodic tasks
 from celery.schedules import crontab
 
+CELERY_BROKER_URL = os.getenv('CELERY_BROKER_URL', 'redis://localhost:6379/0')
 CELERY_BEAT_SCHEDULE = {
     'send-habit-reminders-every-minute': {
         'task': 'habits.tasks.send_habit_reminders',
