@@ -19,4 +19,8 @@ def handle_text(message):
 
 @bot.message_handler(content_types=['document', 'audio'])
 def handle_other_types(message):
-    pass
+    bot.send_message(message.chat.id, "Я не могу обработать этот тип сообщения. Пожалуйста, отправьте текстовое сообщение.")
+
+# Start the bot
+if __name__ == "__main__":
+    bot.polling(none_stop=True)
