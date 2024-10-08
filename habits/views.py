@@ -4,8 +4,10 @@ from .models import Habit
 from .serializers import HabitSerializer
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
 
+
 class HabitPagination(PageNumberPagination):
     page_size = 5
+
 
 class HabitViewSet(viewsets.ModelViewSet):
     queryset = Habit.objects.all()
@@ -15,6 +17,7 @@ class HabitViewSet(viewsets.ModelViewSet):
 
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
+
 
 class PublicHabitViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Habit.objects.filter(is_public=True)
