@@ -1,10 +1,8 @@
-import os
 from django.urls import reverse
 from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
-from dotenv import load_dotenv
 from habits.models import Habit
 from habits.tasks import send_reminder
 
@@ -27,8 +25,6 @@ class HabitAPITestCase(APITestCase):
             'execution_time': 2
         }
         response = self.client.post(self.habit_url, data)
-        if response.status_code == 400:
-            print("Ошибка создания привычки:", response.data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
         self.assertEqual(response.data['action'], 'Read a book')
 
@@ -55,10 +51,25 @@ class HabitAPITestCase(APITestCase):
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
         self.assertFalse(Habit.objects.filter(id=habit.id).exists())
 
-    @patch('celery.app.task.Task.apply_async')
-    def test_send_reminder_task(self, mock_apply_async):
-        # Тестирование отправки отложенного напоминания через Celery
-        send_reminder(user_id=self.user.id, message='Time to read a book!')
-        mock_apply_async.assert_called_once()
-        args, kwargs = mock_apply_async.call_args
-        self.assertIn('eta', kwargs)
+class HabitModelTestCase(APITestCase):
+    def setUp(self):
+        # Создание пользователя для теста
+        self.user = User.objects.create(username='testuser', password='password123')
+
+    def test_create_habit(self):
+        # Тест создания привычки
+        habit = Habit.objects.create(user=self.user, action='Read', place='Home', time='12:00:00', execution_time=5)
+        self.assertEqual(habit.action, 'Read')
+        self.assertEqual(habit.execution_time, 5)
+
+    def test_habit_str(self):
+        # Тест строкового представления привычки
+        habit = Habit.objects.create(user=self.user, action='Read', place='Home', time='12:00:00', execution_time=5)
+        self.assertEqual(str(habit), 'Read (testuser)')  # Исправление для строки
+
+class TaskTestCase(APITestCase):
+    @patch('telegram.Bot.send_message')
+    def test_send_reminder(self, mock_send_message):
+        # Тест задачи отправки напоминания
+        send_reminder(chat_id=12345, message='Test message')
+        mock_send_message.assert_called_once_with(chat_id=12345, text='Test message')
