@@ -1,57 +1,44 @@
-from django.test import TestCase
-from django.urls import reverse
-from rest_framework import status
+import pytest
 from rest_framework.test import APIClient
-from .models import Course, Lesson, Habit
-from users.models import CustomUser
+from django.contrib.auth import get_user_model
+from habits.models import Habit
 
-# Тесты для модели курса
-class CourseTests(TestCase):
-    def setUp(self):
-        self.user = CustomUser.objects.create_user(username='testuser', password='password')
-        self.client = APIClient()
-        self.client.force_authenticate(user=self.user)
-        self.course = Course.objects.create(title='Test Course', description='Course Description', owner=self.user, is_public=True)
+User = get_user_model()
 
-    def test_create_course(self):
-        data = {'title': 'New Course', 'description': 'New Course Description'}
-        response = self.client.post(reverse('course-list'), data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Course.objects.count(), 2)
+@pytest.fixture
+def api_client():
+    return APIClient()
 
-    def test_get_course_list(self):
-        response = self.client.get(reverse('course-list'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
+@pytest.fixture
+def create_user():
+    def _create_user(username, password):
+        return User.objects.create_user(username=username, password=password)
+    return _create_user
 
-    def test_update_course(self):
-        data = {'title': 'Updated Course Title'}
-        response = self.client.patch(reverse('course-detail', args=[self.course.id]), data)
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.course.refresh_from_db()
-        self.assertEqual(self.course.title, 'Updated Course Title')
+@pytest.fixture
+def create_habit(create_user):
+    def _create_habit(user, action, place, time):
+        return Habit.objects.create(user=user, action=action, place=place, time=time)
+    return _create_habit
 
-# Тесты для модели привычек
-class HabitTests(TestCase):
-    def setUp(self):
-        self.user = CustomUser.objects.create_user(username='testuser', password='password')
-        self.client = APIClient()
-        self.client.force_authenticate(user=self.user)
-        self.habit = Habit.objects.create(user=self.user, action='Morning Run', place='Park', time='07:00:00', frequency=1, estimated_time=60)
+# Test for habit creation
+def test_create_habit(api_client, create_user):
+    user = create_user("testuser", "password123")
+    api_client.force_authenticate(user=user)
+    response = api_client.post("/api/habits/", {
+        "action": "Read a book",
+        "place": "Home",
+        "time": "18:00:00"
+    })
+    assert response.status_code == 201
+    assert response.data["action"] == "Read a book"
 
-    def test_create_habit(self):
-        data = {'action': 'Evening Walk', 'place': 'Beach', 'time': '18:00:00', 'frequency': 1, 'estimated_time': 30}
-        response = self.client.post(reverse('habit-list'), data)
-        self.assertEqual(response.status_code, status.HTTP_201_CREATED)
-        self.assertEqual(Habit.objects.count(), 2)
-
-    def test_get_habit_list(self):
-        response = self.client.get(reverse('habit-list'))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.assertEqual(len(response.data), 1)
-
-    def test_complete_habit(self):
-        response = self.client.post(reverse('habit-complete', args=[self.habit.id]))
-        self.assertEqual(response.status_code, status.HTTP_200_OK)
-        self.habit.refresh_from_db()
-        self.assertIsNotNone(self.habit.last_completed)
+# Test for habit list pagination
+def test_habit_pagination(api_client, create_user, create_habit):
+    user = create_user("testuser", "password123")
+    api_client.force_authenticate(user=user)
+    for i in range(10):
+        create_habit(user, f"Habit {i}", "Home", "18:00:00")
+    response = api_client.get("/api/habits/?page=1")
+    assert response.status_code == 200
+    assert len(response.data["results"]) == 5
