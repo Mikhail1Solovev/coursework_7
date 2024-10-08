@@ -2,6 +2,10 @@ from django.db import models
 from django.contrib.auth.models import User
 from django.core.exceptions import ValidationError
 
+def positive_integer_validator(value):
+    if value <= 0:
+        raise ValidationError(f'Value must be positive, got {value}.')
+
 class Habit(models.Model):
     user = models.ForeignKey(User, on_delete=models.CASCADE)
     place = models.CharField(max_length=255)
@@ -9,9 +13,9 @@ class Habit(models.Model):
     action = models.CharField(max_length=255)
     is_pleasant = models.BooleanField(default=False)
     linked_habit = models.ForeignKey('self', null=True, blank=True, on_delete=models.SET_NULL, related_name='related_habits')
-    periodicity = models.PositiveIntegerField(default=1)  # Периодичность выполнения в днях
+    periodicity = models.PositiveIntegerField(default=1, validators=[positive_integer_validator])  # Периодичность выполнения в днях
     reward = models.CharField(max_length=255, null=True, blank=True)
-    execution_time = models.PositiveIntegerField()  # Время на выполнение в секундах
+    execution_time = models.PositiveIntegerField(validators=[positive_integer_validator])  # Время на выполнение в секундах
     is_public = models.BooleanField(default=False)
 
     def clean(self):
