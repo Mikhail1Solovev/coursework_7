@@ -10,7 +10,8 @@ class CustomUserAdmin(UserAdmin):
         'first_name',
         'last_name',
         'is_staff',
-        'telegram_chat_id']  # Проверьте наличие поля в модели
+        'telegram_chat_id'
+    ]
 
 
 admin.site.register(CustomUser, CustomUserAdmin)
