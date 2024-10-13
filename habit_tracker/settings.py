@@ -32,10 +32,12 @@ INSTALLED_APPS = [
     'telegram_bot',
     'rest_framework_simplejwt',
     'drf_spectacular',
+    'corsheaders',
 ]
 
 # Middleware
 MIDDLEWARE = [
+    'corsheaders.middleware.CorsMiddleware',
     'django.middleware.security.SecurityMiddleware',
     'django.contrib.sessions.middleware.SessionMiddleware',
     'django.middleware.common.CommonMiddleware',
@@ -148,4 +150,8 @@ CELERY_BEAT_SCHEDULE = {
 # Настройки Telegram бота
 TELEGRAM_TOKEN = os.getenv('TELEGRAM_TOKEN', 'your_telegram_bot_token')
 
-# Прочие настройки
+# Настройки CORS
+CORS_ALLOWED_ORIGINS = [
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+]

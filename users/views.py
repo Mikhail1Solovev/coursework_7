@@ -15,4 +15,4 @@ class UserViewSet(viewsets.ModelViewSet):
         return [permissions.IsAuthenticated()]
 
     def get_queryset(self):
-        return self.queryset.filter(is_active=Tru
+        return self.queryset.filter(is_active=True)
