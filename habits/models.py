@@ -1,64 +1,41 @@
 from django.db import models
-from django.contrib.auth.models import User
+from users.models import CustomUser
 from django.core.exceptions import ValidationError
 
 
-def positive_integer_validator(value):
-    if value <= 0:
-        raise ValidationError(
-            f'Value must be positive, got {value}.'
-        )
-
-
-class Habit(models.Model):
-    user = models.ForeignKey(
-        User,
-        on_delete=models.CASCADE
-    )
-    place = models.CharField(max_length=255)
-    time = models.TimeField()
+class UserHabit(models.Model):
+    user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     action = models.CharField(max_length=255)
-    is_pleasant = models.BooleanField(default=False)
-    linked_habit = models.ForeignKey(
-        'self',
-        null=True,
-        blank=True,
-        on_delete=models.SET_NULL,
-        related_name='related_habits'
-    )
     periodicity = models.PositiveIntegerField(
-        default=1,
-        validators=[positive_integer_validator]
-    )  # Периодичность выполнения в днях
-    reward = models.CharField(
-        max_length=255,
-        null=True,
-        blank=True
+        help_text='Периодичность выполнения привычки в днях.'
     )
     execution_time = models.PositiveIntegerField(
-        validators=[positive_integer_validator]
-    )  # Время на выполнение в секундах
-    is_public = models.BooleanField(default=False)
+        help_text='Время выполнения привычки в секундах.'
+    )
+    linked_habit = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True, related_name='linked_habits', help_text='Связанная привычка')
+    reward = models.CharField(max_length=255, blank=True, null=True, help_text='Вознаграждение за выполнение привычки')
+    is_pleasant = models.BooleanField(default=False, help_text='Является ли привычка приятной')
 
     def clean(self):
-        # Валидация: нельзя выбирать одновременно вознаграждение и
-        # связанную привычку
-        if self.reward and self.linked_habit:
-            raise ValidationError(
-                'Можно заполнить либо вознаграждение, либо связанную '
-                'привычку, но не оба поля одновременно.'
-            )
-        # Время выполнения должно быть не более 120 секунд
+        # Проверка времени выполнения
         if self.execution_time > 120:
-            raise ValidationError(
-                'Время выполнения привычки не может превышать 120 секунд.'
-            )
-        # Периодичность должна быть не реже одного раза в неделю
+            raise ValidationError('Время выполнения привычки не может превышать 120 секунд.')
+
+        # Периодичность должна быть не реже одного раза в 7 дней
         if self.periodicity > 7:
-            raise ValidationError(
-                'Периодичность выполнения привычки должна быть не реже '
-                'одного раза в неделю.'
-            )
+            raise ValidationError('Периодичность привычки должна быть не реже одного раза в 7 дней.')
+
+        # Нельзя одновременно выбрать связанную привычку и указать вознаграждение
+        if self.reward and self.linked_habit:
+            raise ValidationError('Нельзя одновременно указать связанную привычку и вознаграждение.')
+
+        # Связанной привычкой может быть только приятная привычка
+        if self.linked_habit and not self.linked_habit.is_pleasant:
+            raise ValidationError('Связанной привычкой может быть только приятная привычка.')
+
+        # Приятной привычке нельзя назначить связанную привычку или вознаграждение
+        if self.is_pleasant and (self.linked_habit or self.reward):
+            raise ValidationError('Приятной привычке нельзя назначить связанную привычку или вознаграждение.')
 
     def __str__(self):
-        return f"{self.action} ({self.user.username})"
+        return f"{self.action} ({self.user.email})"
