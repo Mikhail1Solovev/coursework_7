@@ -18,6 +18,11 @@ class HabitViewSet(viewsets.ModelViewSet):
     def get_queryset(self):
         return self.queryset.filter(user=self.request.user)
 
+    def perform_create(self, serializer):
+        habit = serializer.save(user=self.request.user)
+        # Отправка напоминания через Celery
+        send_reminder.apply_async(args=[self.request.user.chat_id, f"Напоминание о привычке: {habit.name}"], countdown=habit.reminder_time)
+
 
 class PublicHabitViewSet(viewsets.ReadOnlyModelViewSet):
     queryset = Habit.objects.filter(is_public=True)
