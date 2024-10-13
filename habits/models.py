@@ -2,7 +2,6 @@ from django.db import models
 from users.models import CustomUser
 from django.core.exceptions import ValidationError
 
-
 class UserHabit(models.Model):
     user = models.ForeignKey(CustomUser, on_delete=models.CASCADE)
     action = models.CharField(max_length=255)
@@ -15,7 +14,11 @@ class UserHabit(models.Model):
     linked_habit = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True, related_name='linked_habits', help_text='Связанная привычка')
     reward = models.CharField(max_length=255, blank=True, null=True, help_text='Вознаграждение за выполнение привычки')
     is_pleasant = models.BooleanField(default=False, help_text='Является ли привычка приятной')
-    is_public = models.BooleanField(default=False, help_text='Является ли привычка публичной')  # Добавлено поле
+    is_public = models.BooleanField(default=False, help_text='Является ли привычка публичной')
+    reminder_time = models.PositiveIntegerField(
+        default=60,  # по умолчанию 60 минут
+        help_text='Через сколько минут отправить напоминание о привычке'
+    )
 
     def clean(self):
         # Проверка времени выполнения

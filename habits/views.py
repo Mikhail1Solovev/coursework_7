@@ -3,6 +3,7 @@ from rest_framework.pagination import PageNumberPagination
 from .models import UserHabit  # Исправлено
 from .serializers import UserHabitSerializer  # Исправлено
 from rest_framework.permissions import IsAuthenticatedOrReadOnly
+from telegram_bot.tasks import send_reminder
 
 
 class HabitPagination(PageNumberPagination):
@@ -20,8 +21,13 @@ class HabitViewSet(viewsets.ModelViewSet):
 
     def perform_create(self, serializer):
         habit = serializer.save(user=self.request.user)
-        # Отправка напоминания через Celery (если требуется)
-        send_reminder.apply_async(args=[self.request.user.chat_id, f"Напоминание о привычке: {habit.action}"], countdown=habit.reminder_time)
+
+        # Проверка наличия времени напоминания перед отправкой задачи
+        if hasattr(habit, 'reminder_time') and habit.reminder_time:
+            send_reminder.apply_async(
+                args=[self.request.user.telegram_chat_id, f"Напоминание о привычке: {habit.action}"],
+                countdown=habit.reminder_time * 60  # Задержка в секундах (пример в минутах)
+            )
 
 
 class PublicHabitViewSet(viewsets.ReadOnlyModelViewSet):

@@ -29,7 +29,7 @@ class CustomUser(AbstractUser):
     username = None
     email = models.EmailField(unique=True, blank=False)
 
-    telegram_chat_id = models.CharField(max_length=255, blank=True, null=True)
+    telegram_chat_id = models.CharField(max_length=100, blank=True, null=True, help_text='Telegram Chat ID для уведомлений')
 
     groups = models.ManyToManyField(
         'auth.Group',
