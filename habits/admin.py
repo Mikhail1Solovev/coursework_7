@@ -1,15 +1,13 @@
 from django.contrib import admin
-from .models import Habit
+from .models import UserHabit
 
-
-@admin.register(Habit)
-class HabitAdmin(admin.ModelAdmin):
+@admin.register(UserHabit)
+class UserHabitAdmin(admin.ModelAdmin):
     list_display = [
         'user',
         'action',
-        'time',
-        'is_public',
+        'execution_time',
         'is_pleasant',
         'periodicity']
-    search_fields = ['user__username', 'action']
-    list_filter = ['is_public', 'is_pleasant', 'periodicity']
+    search_fields = ['user__email', 'action']
+    list_filter = ['is_pleasant', 'periodicity']

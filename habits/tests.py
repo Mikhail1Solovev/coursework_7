@@ -3,18 +3,20 @@ from rest_framework import status
 from rest_framework.test import APITestCase
 from django.contrib.auth import get_user_model
 from unittest.mock import patch
-from habits.models import Habit
+from habits.models import UserHabit
 from habits.tasks import send_reminder
+from rest_framework_simplejwt.tokens import RefreshToken
 
 User = get_user_model()
 
 
 class HabitAPITestCase(APITestCase):
     def setUp(self):
-        # Создание пользователя для тестов
+        # Создание пользователя для тестов (email обязателен)
         self.user = User.objects.create_user(
-            username='testuser', password='password123')
-        self.client.login(username='testuser', password='password123')
+            email='testuser@example.com', password='password123')
+        self.token = RefreshToken.for_user(self.user)
+        self.client.credentials(HTTP_AUTHORIZATION=f'Bearer {self.token.access_token}')
         self.habit_url = reverse('habit-list')
 
     def test_create_habit(self):
@@ -22,9 +24,8 @@ class HabitAPITestCase(APITestCase):
         data = {
             'user': self.user.id,
             'action': 'Read a book',
-            'place': 'Home',
-            'time': '18:00:00',
-            'execution_time': 2
+            'periodicity': 2,
+            'execution_time': 120
         }
         response = self.client.post(self.habit_url, data)
         self.assertEqual(response.status_code, status.HTTP_201_CREATED)
@@ -32,19 +33,17 @@ class HabitAPITestCase(APITestCase):
 
     def test_update_habit(self):
         # Тестирование обновления привычки
-        habit = Habit.objects.create(
+        habit = UserHabit.objects.create(
             user=self.user,
             action='Read a book',
-            place='Home',
-            time='18:00:00',
-            execution_time=2)
+            periodicity=2,
+            execution_time=120)
         update_url = reverse('habit-detail', args=[habit.id])
         data = {
             'user': self.user.id,
             'action': 'Read two books',
-            'place': 'Home',
-            'time': '19:00:00',
-            'execution_time': 3
+            'periodicity': 3,
+            'execution_time': 100
         }
         response = self.client.put(update_url, data)
         self.assertEqual(response.status_code, status.HTTP_200_OK)
@@ -52,45 +51,42 @@ class HabitAPITestCase(APITestCase):
 
     def test_delete_habit(self):
         # Тестирование удаления привычки
-        habit = Habit.objects.create(
+        habit = UserHabit.objects.create(
             user=self.user,
             action='Read a book',
-            place='Home',
-            time='18:00:00',
-            execution_time=2)
+            periodicity=2,
+            execution_time=120)
         delete_url = reverse('habit-detail', args=[habit.id])
         response = self.client.delete(delete_url)
         self.assertEqual(response.status_code, status.HTTP_204_NO_CONTENT)
-        self.assertFalse(Habit.objects.filter(id=habit.id).exists())
+        self.assertFalse(UserHabit.objects.filter(id=habit.id).exists())
 
 
 class HabitModelTestCase(APITestCase):
     def setUp(self):
         # Создание пользователя для теста
-        self.user = User.objects.create(
-            username='testuser', password='password123')
+        self.user = User.objects.create_user(
+            email='testuser@example.com', password='password123')
 
     def test_create_habit(self):
         # Тест создания привычки
-        habit = Habit.objects.create(
+        habit = UserHabit.objects.create(
             user=self.user,
             action='Read',
-            place='Home',
-            time='12:00:00',
-            execution_time=5)
+            periodicity=5,
+            execution_time=100)
         self.assertEqual(habit.action, 'Read')
-        self.assertEqual(habit.execution_time, 5)
+        self.assertEqual(habit.execution_time, 100)
 
     def test_habit_str(self):
         # Тест строкового представления привычки
-        habit = Habit.objects.create(
+        habit = UserHabit.objects.create(
             user=self.user,
             action='Read',
-            place='Home',
-            time='12:00:00',
-            execution_time=5)
+            periodicity=5,
+            execution_time=100)
         # Исправление для строки
-        self.assertEqual(str(habit), 'Read (testuser)')
+        self.assertEqual(str(habit), 'Read (testuser@example.com)')
 
 
 class TaskTestCase(APITestCase):

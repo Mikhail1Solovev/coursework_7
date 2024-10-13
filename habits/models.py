@@ -15,6 +15,7 @@ class UserHabit(models.Model):
     linked_habit = models.ForeignKey('self', on_delete=models.SET_NULL, blank=True, null=True, related_name='linked_habits', help_text='Связанная привычка')
     reward = models.CharField(max_length=255, blank=True, null=True, help_text='Вознаграждение за выполнение привычки')
     is_pleasant = models.BooleanField(default=False, help_text='Является ли привычка приятной')
+    is_public = models.BooleanField(default=False, help_text='Является ли привычка публичной')  # Добавлено поле
 
     def clean(self):
         # Проверка времени выполнения

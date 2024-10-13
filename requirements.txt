@@ -11,3 +11,4 @@ coreapi
 flake8
 djangorestframework-simplejwt
 drf-yasg
+drf-spectacular
