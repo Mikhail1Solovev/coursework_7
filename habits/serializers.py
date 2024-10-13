@@ -1,7 +1,6 @@
 from rest_framework import serializers
 from .models import UserHabit
 
-
 class UserHabitSerializer(serializers.ModelSerializer):
     class Meta:
         model = UserHabit
@@ -21,7 +20,8 @@ class UserHabitSerializer(serializers.ModelSerializer):
             raise serializers.ValidationError("Периодичность должна быть не реже одного раза в 7 дней.")
 
         # Связанной привычкой может быть только приятная привычка
-        if data.get('linked_habit') and not data['linked_habit'].is_pleasant:
+        linked_habit = data.get('linked_habit')
+        if linked_habit and not linked_habit.is_pleasant:
             raise serializers.ValidationError("Связанной привычкой может быть только приятная привычка.")
 
         # Приятной привычке нельзя назначить связанную привычку или вознаграждение
