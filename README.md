@@ -50,7 +50,3 @@ python manage.py migrate
 ```bash
 python manage.py runserver
 ```
-6. Запустить Celery для отправки отложенных задач:
-```bash
-celery -A habit_tracker worker --loglevel=info
-```
