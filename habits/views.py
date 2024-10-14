@@ -23,10 +23,14 @@ class HabitViewSet(viewsets.ModelViewSet):
         habit = serializer.save(user=self.request.user)
 
         # Проверка наличия времени напоминания перед отправкой задачи
-        if hasattr(habit, 'reminder_time') and habit.reminder_time:
+        if hasattr(habit, "reminder_time") and habit.reminder_time:
             send_reminder.apply_async(
-                args=[self.request.user.telegram_chat_id, f"Напоминание о привычке: {habit.action}"],
-                countdown=habit.reminder_time * 60  # Задержка в секундах (пример в минутах)
+                args=[
+                    self.request.user.telegram_chat_id,
+                    f"Напоминание о привычке: {habit.action}",
+                ],
+                # Задержка в секундах (пример в минутах)
+                countdown=habit.reminder_time * 60,
             )
 
 

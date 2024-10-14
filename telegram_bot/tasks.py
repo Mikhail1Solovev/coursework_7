@@ -1,5 +1,6 @@
 import logging
 from celery import shared_task
+
 # Импорт функции для получения бота
 from telegram_bot.bot import get_bot_instance
 

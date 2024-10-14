@@ -10,7 +10,7 @@ class UserViewSet(viewsets.ModelViewSet):
 
     # Разрешить неавторизованным пользователям доступ к регистрации
     def get_permissions(self):
-        if self.action == 'create':
+        if self.action == "create":
             return [AllowAny()]
         return [permissions.IsAuthenticated()]
 
