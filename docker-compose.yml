@@ -1,0 +1,42 @@
+version: '3.8'
+
+services:
+  django:
+    build: .
+    command: python manage.py runserver 0.0.0.0:8000
+    volumes:
+      - .:/app
+    ports:
+      - "8000:8000"
+    depends_on:
+      - db
+      - redis
+      - celery
+    env_file:
+      - .env
+
+  db:
+    image: postgres:13
+    volumes:
+      - postgres_data:/var/lib/postgresql/data/
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: django_db
+
+  redis:
+    image: redis:6-alpine
+    restart: unless-stopped
+  celery:
+    build: .
+    command: celery -A habit_tracker worker --loglevel=info
+    volumes:
+      - .:/app
+    depends_on:
+      - redis
+      - db
+    env_file:
+      - .env
+
+volumes:
+  postgres_data:
