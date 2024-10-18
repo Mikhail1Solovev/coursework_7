@@ -50,7 +50,8 @@ python manage.py migrate
 ```bash
 python manage.py runserver
 ```
-6. Запуск контейнеров
+6. Запуск контейнеров:
+
 Соберите и запустите контейнеры с помощью Docker Compose:
 ```bash
 docker-compose up --build
